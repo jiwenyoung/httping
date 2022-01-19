@@ -1,0 +1,17 @@
+{
+  "name": "tcpping",
+  "version": "1.0.0",
+  "description": "TCP Ping Tool on CLI",
+  "main": "tcpping",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jiwen Young",
+  "license": "ISC",
+  "dependencies": {
+    "@whoisinfo/isdomain": "^1.0.1",
+    "commander": "^8.3.0",
+    "isip": "^0.0.1",
+    "tcp-ping-node": "^1.0.0"
+  }
+}
