@@ -11,7 +11,6 @@
   "dependencies": {
     "@whoisinfo/isdomain": "^1.0.1",
     "commander": "^8.3.0",
-    "isip": "^0.0.1",
-    "tcp-ping-node": "^1.0.0"
+    "isip": "^0.0.1"
   }
 }

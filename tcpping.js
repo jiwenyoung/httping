@@ -1,15 +1,61 @@
 const { Command } = require('commander')
-const { ping } = require('tcp-ping-node')
 const isdomain = require('@whoisinfo/isdomain')
 const isip = require('isip')
 const process = require('process')
+const net = require('net')
 
+/**
+ * Ping Function
+ */
+ const getElapsedTime = (startAt) => {
+  const elapsed = process.hrtime(startAt);
+  // cover to milliseconds
+  const ms = (elapsed[0] * 1e3) + (elapsed[1] * 1e-6)
+  return ms.toFixed(0)
+}
+
+const ping = (options) => {
+  options = options || {};
+  const host = options.host || 'localhost';
+  const port = options.port || 80;
+  const timeout = options.timeout || 5000;
+  const start = process.hrtime();
+  const result = { host, port }
+  
+  return new Promise((resolve) => {
+      const socket = new net.Socket();
+      socket.connect(parseInt(port), host, () => {
+          result.time = getElapsedTime(start);
+          result.success = true;
+          socket.destroy();
+          resolve(result);
+      });
+      socket.on('error', (e) => {
+          result.time = getElapsedTime(start);
+          result.success = false;
+          result.error = e.message;
+          socket.destroy();
+          resolve(result);
+      });
+      socket.setTimeout(timeout, () => {
+          result.time = getElapsedTime(start);
+          result.success = false;
+          result.error = 'Request Timeout';
+          socket.destroy();
+          resolve(result);
+      });
+  });
+}
+
+/**
+ * Main
+ */
 const main = async () => {
   try{
     const program = new Command();
     program.version('0.0.1');
-    
-    
+
+    // Host Argument
     program.argument('<host>', 'the destination host of ping', (host)=>{
       if( isdomain(host) || isip(host) ){
         return host.trim()
@@ -21,7 +67,7 @@ const main = async () => {
     // Port option
     program.option('-p, --port <port>', 'the destination port', (port)=>{
       port = Number(port)
-      if(Number.isInteger(port) === false){
+      if(Number.isSafeInteger(port) === false){
         throw new Error('port is not a number')
       }else{
         if(port <= 0 || port >= 65535 || port == 1023){
@@ -110,15 +156,11 @@ const main = async () => {
           statistics.no++
         }
         index++ 
+
+        // Sleep for 100ms
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       outputStatistic()
-
-      //process.on('SIGINT', ()=>{
-      //  console.log('ttt')
-      //  outputStatistic()
-      //  process.exit(0)
-      //})
-
     })
     await program.parseAsync(process.argv)
   }catch(error){
