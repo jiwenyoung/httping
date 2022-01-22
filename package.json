@@ -1,7 +1,7 @@
 {
   "name": "tcpping",
   "version": "1.0.0",
-  "description": "TCP Ping Tool on CLI",
+  "description": "HTTP Ping Tool on CLI",
   "main": "tcpping",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@whoisinfo/isdomain": "^1.0.1",
+    "axios": "^0.25.0",
     "commander": "^8.3.0",
     "isip": "^0.0.1"
   }

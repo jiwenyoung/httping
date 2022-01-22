@@ -3,7 +3,7 @@ const isdomain = require('@whoisinfo/isdomain')
 const isip = require('isip')
 const process = require('process')
 const net = require('net')
-//const ping = require('tcp-ping-node')
+const axios = require('axios')
 
 /**
  * Ping Function
@@ -17,34 +17,44 @@ const getElapsedTime = (startAt) => {
 
 const ping = (options) => {
   options = options || {};
-  const host = options.host || 'localhost';
-  const port = options.port || 443;
+  const host = options.host || '127.0.0.1';
+  const port = options.port || 80;
   const timeout = options.timeout || 5000;
   const start = process.hrtime.bigint();
   const result = { host, port }
   
-  return new Promise(async (resolve) => {
-      const socket = new net.Socket();
-      socket.connect(parseInt(port), host, () => {
+  return new Promise((resolve) => {
+      axios.head(`http://${host}`).then((data)=>{
         result.time = getElapsedTime(start);
         result.success = true;
-        socket.destroy();
         resolve(result);
-      });
-      socket.on('error', (e) => {
-          result.time = getElapsedTime(start);
-          result.success = false;
-          result.error = e.message;
-          socket.destroy();
-          resolve(result);
-      });
-      socket.setTimeout(timeout, () => {
-          result.time = getElapsedTime(start);
-          result.success = false;
-          result.error = 'Request Timeout';
-          socket.destroy();
-          resolve(result);
-      });
+      }).catch((error)=>{
+        result.time = getElapsedTime(start);
+        result.success = true;
+        resolve(result);
+      })
+      //const socket = new net.Socket();
+      //socket.on('connect', ()=>{
+      //  result.time = getElapsedTime(start);
+      //  result.success = true;
+      //  resolve(result);
+      //  socket.destroy();
+      //})
+      //socket.on('error', (e) => {
+      //    result.time = getElapsedTime(start);
+      //    result.success = false;
+      //    result.error = e.message;
+      //    socket.destroy();
+      //    resolve(result);
+      //});
+      //socket.setTimeout(timeout, () => {
+      //    result.time = getElapsedTime(start);
+      //    result.success = false;
+      //    result.error = 'Request Timeout';
+      //    socket.destroy();
+      //    resolve(result);
+      //  });
+      //socket.connect(parseInt(port), host);
   });
 }
 
