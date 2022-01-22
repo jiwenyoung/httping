@@ -3,32 +3,33 @@ const isdomain = require('@whoisinfo/isdomain')
 const isip = require('isip')
 const process = require('process')
 const net = require('net')
+//const ping = require('tcp-ping-node')
 
 /**
  * Ping Function
  */
- const getElapsedTime = (startAt) => {
-  const elapsed = process.hrtime(startAt);
-  // cover to milliseconds
-  const ms = (elapsed[0] * 1e3) + (elapsed[1] * 1e-6)
+const getElapsedTime = (startAt) => {
+  const endAt = process.hrtime.bigint()
+  const elapsed = endAt - startAt
+  const ms = Number(elapsed) / 1000000
   return ms.toFixed(0)
 }
 
 const ping = (options) => {
   options = options || {};
   const host = options.host || 'localhost';
-  const port = options.port || 80;
+  const port = options.port || 443;
   const timeout = options.timeout || 5000;
-  const start = process.hrtime();
+  const start = process.hrtime.bigint();
   const result = { host, port }
   
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
       const socket = new net.Socket();
       socket.connect(parseInt(port), host, () => {
-          result.time = getElapsedTime(start);
-          result.success = true;
-          socket.destroy();
-          resolve(result);
+        result.time = getElapsedTime(start);
+        result.success = true;
+        socket.destroy();
+        resolve(result);
       });
       socket.on('error', (e) => {
           result.time = getElapsedTime(start);
@@ -137,7 +138,7 @@ const main = async () => {
           timeout: 10000
         })
         if(response.success){
-          let time = Math.floor(response.time)
+          let time = Math.floor(Number(response.time))
           if(time > max){
             max = time
           }
@@ -149,7 +150,7 @@ const main = async () => {
             }
           }
           total = total + time
-          console.log(`Reply from ${response.host}: port=${response.port} time=${time}ms`)
+          console.log(`Reply from ${response.host} port=${response.port} time=${time}ms`)
           statistics.ok++
         }else{
           console.log(`Request time out`)
@@ -164,6 +165,7 @@ const main = async () => {
     })
     await program.parseAsync(process.argv)
   }catch(error){
+    console.dir(error)
     console.error(error.message)
     console.error()
   }
