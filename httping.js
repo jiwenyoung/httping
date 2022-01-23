@@ -156,17 +156,17 @@ const main = async () => {
             http: Math.floor(response.time.http),
             tcp: Math.floor(response.time.tcp)
           }
-          if (time > max) {
-            max = time
+          if (time.tcp > max) {
+            max = time.tcp
           }
           if (index === 0) {
-            min = time
+            min = time.tcp
           } else {
-            if (time < min) {
-              min = time
+            if (time.tcp < min) {
+              min = time.tcp
             }
           }
-          total = total + time
+          total = total + time.tcp
           console.log(`Reply from ${response.host} port=${response.port} http/time=${time.http}ms tcp/time=${time.tcp}ms`)
           statistics.ok++
         } else {
