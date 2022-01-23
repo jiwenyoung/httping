@@ -1,60 +1,55 @@
 const { Command } = require('commander')
 const isdomain = require('@whoisinfo/isdomain')
-const isip = require('isip')
+const isIP = require('isipaddress')
 const process = require('process')
-const net = require('net')
-const axios = require('axios')
+const http = require('http')
 
 /**
  * Ping Function
  */
-const getElapsedTime = (startAt) => {
-  const endAt = process.hrtime.bigint()
-  const elapsed = endAt - startAt
-  const ms = Number(elapsed) / 1000000
-  return ms.toFixed(0)
-}
-
 const ping = (options) => {
+
+  const getElapsedTime = (startAt) => {
+    const endAt = process.hrtime.bigint()
+    const elapsed = endAt - startAt
+    const ms = Number(elapsed) / 1000000
+    return Number(ms.toFixed(0))
+  }
+
   options = options || {};
-  const host = options.host || '127.0.0.1';
-  const port = options.port || 80;
-  const timeout = options.timeout || 5000;
-  const start = process.hrtime.bigint();
-  const result = { host, port }
-  
+  let host = options.host || '127.0.0.1';
+  let port = options.port || 80;
+  let timeout = options.timeout || 5000;
+  let start = process.hrtime.bigint();
+  let result = { host, port }
+
   return new Promise((resolve) => {
-      axios.head(`http://${host}`).then((data)=>{
-        result.time = getElapsedTime(start);
-        result.success = true;
-        resolve(result);
-      }).catch((error)=>{
-        result.time = getElapsedTime(start);
-        result.success = true;
-        resolve(result);
-      })
-      //const socket = new net.Socket();
-      //socket.on('connect', ()=>{
-      //  result.time = getElapsedTime(start);
-      //  result.success = true;
-      //  resolve(result);
-      //  socket.destroy();
-      //})
-      //socket.on('error', (e) => {
-      //    result.time = getElapsedTime(start);
-      //    result.success = false;
-      //    result.error = e.message;
-      //    socket.destroy();
-      //    resolve(result);
-      //});
-      //socket.setTimeout(timeout, () => {
-      //    result.time = getElapsedTime(start);
-      //    result.success = false;
-      //    result.error = 'Request Timeout';
-      //    socket.destroy();
-      //    resolve(result);
-      //  });
-      //socket.connect(parseInt(port), host);
+    const request = http.request({
+      port: port,
+      host: host,
+      method: 'CONNECT'
+    }).end()
+
+    request.on('connect', () => {
+      result.time = getElapsedTime(start);
+      result.success = true;
+      resolve(result);
+    })
+
+    request.on('error', (error) => {
+      result.time = getElapsedTime(start);
+      result.success = true;
+      result.error = error.message
+      resolve(result);
+    })
+
+    request.setTimeout(timeout)
+    request.on('timeout', () => {
+      result.time = getElapsedTime(start);
+      result.success = false;
+      result.error = 'Request Timeout';
+      resolve(result)
+    })
   });
 }
 
@@ -62,52 +57,52 @@ const ping = (options) => {
  * Main
  */
 const main = async () => {
-  try{
+  try {
     const program = new Command();
     program.version('0.0.1');
 
     // Host Argument
-    program.argument('<host>', 'the destination host of ping', (host)=>{
-      if( isdomain(host) || isip(host) ){
+    program.argument('<host>', 'the destination host of ping', (host) => {
+      if (isdomain(host) || isIP.test(host)) {
         return host.trim()
-      }else{
+      } else {
         throw new Error('host is neither domian nor ip')
       }
     })
 
     // Port option
-    program.option('-p, --port <port>', 'the destination port', (port)=>{
+    program.option('-p, --port <port>', 'the destination port', (port) => {
       port = Number(port)
-      if(Number.isSafeInteger(port) === false){
+      if (Number.isSafeInteger(port) === false) {
         throw new Error('port is not a number')
-      }else{
-        if(port <= 0 || port >= 65535 || port == 1023){
+      } else {
+        if (port <= 0 || port >= 65535 || port == 1023) {
           throw new Error('This port is reversed')
-        }else{
+        } else {
           return port
         }
       }
     })
 
     // Times
-    program.option('-t, --times <times>', 'how many times do you want to ping', (times)=>{
+    program.option('-t, --times <times>', 'how many times do you want to ping', (times) => {
       times = Number(times)
-      if(Number.isSafeInteger(times)){
+      if (Number.isSafeInteger(times)) {
         return times
-      }else{
+      } else {
         throw new Error(`Can not ping ${times} times`)
       }
     })
 
-    program.action(async(host, options) => {
+    program.action(async (host, options) => {
       let port = 80
-      if(options.port){
+      if (options.port) {
         port = Number(options.port)
       }
 
       let times = 0
       let index = 0
-      if(options.times){
+      if (options.times) {
         times = options.times
       }
 
@@ -119,7 +114,7 @@ const main = async () => {
       let min = 0
       let total = 0
 
-      const outputStatistic = () =>{
+      const outputStatistic = () => {
         console.log()
         console.log(`Ping statistics for ${host}:`)
         let loss = statistics.no / index * 100
@@ -130,43 +125,44 @@ const main = async () => {
         console.log()
       }
 
-      process.on('SIGINT',()=>{
+      process.on('SIGINT', () => {
         outputStatistic()
         process.exit(0)
       })
-      
+
       console.log()
-      while(true){
-        if(times !== 0){
-          if(index === times){
+      while (true) {
+        if (times !== 0) {
+          if (index === times) {
             break;
           }
         }
         let response = await ping({
-          host: host, 
-          port: port, 
+          host: host,
+          port: port,
           timeout: 10000
         })
-        if(response.success){
-          let time = Math.floor(Number(response.time))
-          if(time > max){
+
+        if (response.success) {
+          let time = Math.floor(response.time)
+          if (time > max) {
             max = time
           }
-          if(index === 0){
+          if (index === 0) {
             min = time
-          }else{
-            if(time < min){
+          } else {
+            if (time < min) {
               min = time
             }
           }
           total = total + time
           console.log(`Reply from ${response.host} port=${response.port} time=${time}ms`)
           statistics.ok++
-        }else{
+        } else {
           console.log(`Request time out`)
           statistics.no++
         }
-        index++ 
+        index++
 
         // Sleep for 100ms
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -174,8 +170,7 @@ const main = async () => {
       outputStatistic()
     })
     await program.parseAsync(process.argv)
-  }catch(error){
-    console.dir(error)
+  } catch (error) {
     console.error(error.message)
     console.error()
   }
