@@ -44,7 +44,7 @@ const ping = (options) => {
       let time = getElapsedTime(start)
       result.time = {
         http: time,
-        tcp: time / 3
+        tcp: (time / 3).toFixed(0)
       }
       result.success = true;
       result.error = error.message
@@ -128,8 +128,9 @@ const main = async () => {
         let loss = statistics.no / index * 100
         console.log(`    Packets: Sent = ${index}, Received = ${statistics.ok}, Lost = ${statistics.no} (${loss}% loss)`)
         console.log(`Approximate round trip times in milli-seconds:`)
-        let average = Math.floor(total / index)
-        console.log(`    Minimum = ${min}ms, Maximum = ${max}ms, Average = ${average}ms`)
+        let average = (total / index).toFixed(0)
+        console.log(`    HTTP:  Minimum = ${min * 3}ms, Maximum = ${max * 3}ms, Average = ${average * 3}ms`)
+        console.log(`    TCP :  Minimum = ${min}ms, Maximum = ${max}ms, Average = ${average}ms`)
         console.log()
       }
 
@@ -153,8 +154,8 @@ const main = async () => {
 
         if (response.success) {
           let time = {
-            http: Math.floor(response.time.http),
-            tcp: Math.floor(response.time.tcp)
+            http: response.time.http,
+            tcp: response.time.tcp.toFixed(0)
           }
           if (time.tcp > max) {
             max = time.tcp
@@ -166,7 +167,7 @@ const main = async () => {
               min = time.tcp
             }
           }
-          total = total + time.tcp
+          total = Number(total) + Number(time.tcp)
           console.log(`Reply from ${response.host} port=${response.port} http/time=${time.http}ms tcp/time=${time.tcp}ms`)
           statistics.ok++
         } else {
