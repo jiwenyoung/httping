@@ -31,13 +31,21 @@ const ping = (options) => {
     }).end()
 
     request.on('connect', () => {
-      result.time = getElapsedTime(start);
+      let time = getElapsedTime(start)
+      result.time = {
+        http: time,
+        tcp: time / 3
+      }
       result.success = true;
       resolve(result);
     })
 
     request.on('error', (error) => {
-      result.time = getElapsedTime(start);
+      let time = getElapsedTime(start)
+      result.time = {
+        http: time,
+        tcp: time / 3
+      }
       result.success = true;
       result.error = error.message
       resolve(result);
@@ -144,7 +152,10 @@ const main = async () => {
         })
 
         if (response.success) {
-          let time = Math.floor(response.time)
+          let time = {
+            http: Math.floor(response.time.http),
+            tcp: Math.floor(response.time.tcp)
+          }
           if (time > max) {
             max = time
           }
@@ -156,7 +167,7 @@ const main = async () => {
             }
           }
           total = total + time
-          console.log(`Reply from ${response.host} port=${response.port} time=${time}ms`)
+          console.log(`Reply from ${response.host} port=${response.port} http/time=${time.http}ms tcp/time=${time.tcp}ms`)
           statistics.ok++
         } else {
           console.log(`Request time out`)
