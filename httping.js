@@ -176,8 +176,6 @@ const main = async () => {
         }
         index++
 
-        // Sleep for 100ms
-        await new Promise(resolve => setTimeout(resolve, 100));
       }
       outputStatistic()
     })
